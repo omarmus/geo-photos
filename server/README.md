@@ -14,9 +14,25 @@ curl -sL https://deb.nodesource.com/setup_10.x | bash -
 apt-get install -y nodejs
 ```
 
-## Instalando el proyecto
-
+## Instalando el proyecto para Producción
 Siga los siguientes pasos:
+
+``` bash
+# 1. Instalar dependencias
+npm install
+
+# 2. Instalar pm2 si no se tiene instalado
+npm install --global pm2
+
+# 3. Iniciar el servidor con pm2 dentro esta carpeta
+pm2 start --name backend-geo index.js
+
+# 4. Guardar cambios en startup
+pm2 startup
+```
+
+## Instalando el proyecto para Desarrollo
+
 
 ``` bash
 # 1. Instalar dependencias
