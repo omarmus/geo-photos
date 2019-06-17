@@ -1,13 +1,19 @@
 <template>
   <div class="foto">
-    <div v-show="loading" class="foto-loading">
-      {{ message }}
+    <div
+      v-show="loading"
+      class="foto-loading">
+      <div v-html="message"></div>
     </div>
-    <div v-show="error" class="foto-error">
-      {{ error }}
+    <div
+      v-show="error"
+      v-html="error"
+      class="foto-error">
     </div>
-    <div v-show="success" class="foto-success">
-      {{ success }}
+    <div
+      v-show="success"
+      v-html="success"
+      class="foto-success">
     </div>
     <div class="foto-container">
       <video
@@ -177,6 +183,8 @@ export default {
     // Get access to the camera!
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       this.selectCamera(true)
+    } else {
+      alert('No existe navigator.mediaDevices')
     }
   },
   methods: {
@@ -197,7 +205,7 @@ export default {
     next () {
       let img = document.getElementById('foto-img')
       if (this.empty(img.src) || img.src === 'data:,') {
-        this.showError('Debe sacar una foto primero, habilite la camara primero')
+        this.showError('⚠️ Debe sacar una foto primero, habilite la camara primero')
         return false
       }
       if (window.localStorage.getItem('app-geofoto-user')) {
@@ -210,18 +218,18 @@ export default {
     },
     async send () {
       if (this.empty(this.form.email) && this.empty(this.form.phone)) {
-        this.showError('Debe llenar al menos un correo electrónico o un número de teléfono')
+        this.showError('⚠️ Debe llenar al menos un correo electrónico o un número de teléfono')
         return false
       }
       let img = document.getElementById('foto-img')
       let data = Object.assign({}, this.address)
       if (this.empty(img.src) || img.src === 'data:,') {
-        this.showError('Debe sacar una foto antes de envíarla')
+        this.showError('⚠️ Debe sacar una foto antes de envíarla')
         return false
       }
       console.log('coordinates', data.coordinates)
       if (!data.coordinates) {
-        this.showError('Debe envíar la ubicación de la fotografía')
+        this.showError('⚠️ Debe envíar la ubicación de la fotografía')
         return false
       }
       this.sending = true
@@ -242,15 +250,15 @@ export default {
       }
       window.localStorage.setItem('app-geofoto-user', JSON.stringify(user))
       try {
-        this.showLoading('Enviando su fotografía, espere por favor...')
+        this.showLoading('Enviando su fotografía, <br> espere por favor...')
         let response = await axios.post(URL + '/api/register', data)
         this.sending = false
         if (response.data.id) {
           this.hideLoading()
-          this.showSuccess('¡Su foto se envió correctamente!')
+          this.showSuccess('✅ ¡Su foto se envió correctamente!')
           this.cancel(false)
         } else {
-          this.showError('No se pudo crear la ubicación')
+          this.showError('⚠️ No se pudo crear la ubicación')
         }
       } catch (error) {
         this.sending = false
@@ -273,61 +281,76 @@ export default {
       context.drawImage(video, 0, 0)
       img.src = canvas.toDataURL('image/webp')
     },
-    selectCamera (init) {
-      if (this.currentStream) {
-        this.stopMediaTracks(this.currentStream)
-      }
-      let videoConstraints = {
-        width: { ideal: 1280 },
-        height: { ideal: 720 }
-      }
-      if (init) {
-        videoConstraints.facingMode = 'environment' // or 'user'
-      } else {
-        this.camera = this.devices[0].deviceId === this.camera ? this.devices[1].deviceId : this.devices[0].deviceId
-        videoConstraints.deviceId = { exact: this.camera }
-      }
-      const constraints = {
-        video: videoConstraints,
-        audio: false
-      }
+    getCamera () {
 
-      navigator.mediaDevices
-        .getUserMedia(constraints)
-        .then(stream => {
-          this.currentStream = stream
-          this.video.srcObject = stream
-          return navigator.mediaDevices.enumerateDevices()
-        })
-        .then(mediaDevices => {
-          if (this.devices.length === 0) {
-            this.gotDevices(mediaDevices)
-          }
-        })
-        .catch(error => {
-          console.error(error)
-        })
+    },
+    selectCamera (init) {
+      try {
+        if (this.currentStream) {
+          this.stopMediaTracks(this.currentStream)
+        }
+        let videoConstraints = {
+          // width: { ideal: 1280 }, // No funciona con Android's antiguos :(
+          // height: { ideal: 720 }
+        }
+        if (init) {
+          videoConstraints.facingMode = 'environment' // or 'user'
+        } else {
+          this.camera = this.devices[0].deviceId === this.camera ? this.devices[1].deviceId : this.devices[0].deviceId
+          videoConstraints.deviceId = { exact: this.camera }
+        }
+        const constraints = {
+          video: videoConstraints,
+          audio: false
+        }
+
+        navigator.mediaDevices
+          .getUserMedia(constraints)
+          .then(stream => {
+            this.currentStream = stream
+            this.video.srcObject = stream
+            return navigator.mediaDevices.enumerateDevices()
+          })
+          .then(mediaDevices => {
+            if (this.devices.length === 0) {
+              this.gotDevices(mediaDevices)
+            }
+          })
+          .catch(error => {
+            alert('ERROR navigator.mediaDevices: ' + (error.message || '') + ' - ' + JSON.stringify(error))
+          })
+      } catch (error) {
+        alert('ERROR selectCamera: ' + (error.message || '') + ' - ' + JSON.stringify(error))
+      }
     },
     stopMediaTracks (stream) {
-      stream.getTracks().forEach(track => {
-        track.stop()
-      })
+      try {
+        stream.getTracks().forEach(track => {
+          track.stop()
+        })
+      } catch (error) {
+        alert('ERROR stopMediaTracks: ' + (error.message || '') + ' - ' + JSON.stringify(error))
+      }
     },
     gotDevices (mediaDevices) {
-      let devices = []
-      mediaDevices.forEach(device => {
-        if (device.kind === 'videoinput') {
-          let media = {
-            deviceId: device.deviceId,
-            label: device.label.split(' ').reverse()[0]
+      try {
+        let devices = []
+        mediaDevices.forEach(device => {
+          if (device.kind === 'videoinput') {
+            let media = {
+              deviceId: device.deviceId,
+              label: device.label.split(' ').reverse()[0]
+            }
+            devices.push(media)
           }
-          devices.push(media)
+        })
+        this.devices = devices
+        if (this.devices[1]) {
+          this.camera = this.devices[1].deviceId
         }
-      })
-      if (this.devices[0]) {
-        this.camera = this.devices[0].deviceId
+      } catch (error) {
+        console.error('ERROR gotDevices: ' + (error.message || '') + ' - ' + JSON.stringify(error))
       }
-      this.devices = devices
     },
     async fetchAddress () {
       this.address = {}
@@ -383,6 +406,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
+  background-color: #333333;
 }
 .foto-user {
   position: absolute;
@@ -509,6 +533,10 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  & > div {
+    text-align: center;
+  }
 }
 .foto-error {
   position: absolute;
