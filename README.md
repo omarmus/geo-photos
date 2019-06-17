@@ -9,9 +9,11 @@ En el archivo `vue.config.js` colocar el subdominio si se require en la propieda
 npm run build
 ```
 
-Este frontend require del backend que está en la carpeta `server` de este proyecto.
+Copiar el contenido de la carpeta `dist` en la carpeta `/var/www/html` o donde esté redireccionando el Nginx
 
-## Instalación desarrollo
+**Nota.-** Este frontend require del backend que está en la carpeta `server` de este proyecto.
+
+## Instalación para desarrollo
 ```
 npm install
 ```
