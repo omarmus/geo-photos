@@ -131,7 +131,7 @@
 import * as locationService from './location'
 import axios from 'axios'
 
-const URL = 'https://192.168.28.108:3000'
+const URL = 'https://geo-photos.herokuapp.com'
 
 export default {
   data () {
